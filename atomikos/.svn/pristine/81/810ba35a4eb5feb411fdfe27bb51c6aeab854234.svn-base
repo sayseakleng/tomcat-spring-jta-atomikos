@@ -1,0 +1,121 @@
+package com.mcnc.mbanking.auth.controller;
+
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+
+import javax.servlet.http.HttpSession;
+
+import org.bouncycastle.cert.CertIOException;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import com.mcnc.mbanking.auth.domain.AuthenticationResult;
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+import com.mcnc.mbanking.auth.domain.ResponseMessage;
+import com.mcnc.mbanking.auth.domain.ResponseMessageBuilder;
+import com.mcnc.mbanking.auth.util.CertificateUtils;
+import com.mcnc.mbanking.auth.util.Consts;
+import com.mcnc.mbanking.auth.util.PairKeyAuthenticationUtils;
+
+@RestController
+public class AuthController {
+	private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+	
+	/**
+	 * Generate Private/Public key pair and save to session
+	 * <br/>
+	 * Client limitation: Support {@link RSAPublicKeySpec} & {@link RSAPrivateKeySpec}
+	 * 
+	 * <br/>
+	 * Currently it supports Android client
+	 * 
+	 * @param httpSession
+	 * @return
+	 */
+	@PostMapping("/api/auth/secure")
+	public ResponseMessage<AuthenticationResult> generateKeyPairAuthentication(HttpSession httpSession) {
+		
+		AuthenticationResult result = null;
+		
+		PairKeyAuthentication pairKeyAuthentication = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		
+		
+		if(pairKeyAuthentication != null) {
+			result = new AuthenticationResult(pairKeyAuthentication.getPublicKey(), 
+					pairKeyAuthentication.getSalt()) ;
+			httpSession.setAttribute(Consts.PAIR_KEY_SESSION_KEY, pairKeyAuthentication);
+		}
+		else {
+			logger.error("Cannot authorized auth request");
+		}
+		
+		return ResponseMessageBuilder.instance(result)
+				.build();
+	}
+	
+	/**
+	 *  Generate Private/Public key pair and save to session
+	 * <br/>
+	 * Client limitation: Support DER certification
+	 * 
+	 * <br/>
+	 * Currently it supports iOS client
+	 * 
+	 * @param httpSession
+	 * @return
+	 * @throws InvalidKeyException
+	 * @throws OperatorCreationException
+	 * @throws CertIOException
+	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchProviderException
+	 * @throws SignatureException
+	 */
+	@PostMapping("/api/auth/secure/der")
+	public ResponseEntity<byte[]> generateCertificateBytes(HttpSession httpSession) throws InvalidKeyException, OperatorCreationException, 
+			CertIOException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
+		byte[] response = null;
+		
+		PairKeyAuthentication pairKeyAuthentication = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		
+		
+		if(pairKeyAuthentication != null) {
+			httpSession.setAttribute(Consts.PAIR_KEY_SESSION_KEY, pairKeyAuthentication);
+			response = CertificateUtils.generateCertificate(pairKeyAuthentication);
+		}
+		else {
+			logger.error("Cannot authorized auth request");
+		}
+		
+		return new ResponseEntity<byte[]>(response, HttpStatus.OK);
+	}
+
+	
+	/**
+	 * To clear Private/Public Keys from session
+	 * 
+	 * @param httpSession
+	 * @return
+	 */
+	@PostMapping("/api/auth/logout")
+	public ResponseMessage<Boolean> logout(HttpSession httpSession) {
+		
+		httpSession.invalidate();
+		
+		return ResponseMessageBuilder.instance(Boolean.TRUE)
+				.build();
+	
+	}
+}

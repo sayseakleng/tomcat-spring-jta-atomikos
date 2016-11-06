@@ -1,0 +1,87 @@
+package com.mcnc.mbanking.auth.service.impl;
+
+import java.util.Date;
+
+import org.jboss.aerogear.security.otp.Totp;
+import org.jboss.aerogear.security.otp.api.Base32;
+import org.jboss.aerogear.security.otp.api.Clock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.mcnc.mbanking.auth.domain.Account;
+import com.mcnc.mbanking.auth.domain.AccountOTP;
+import com.mcnc.mbanking.auth.service.AccountOTPService;
+import com.mcnc.mbanking.auth.service.AccountService;
+import com.mcnc.mbanking.auth.service.OTPService;
+
+@Service
+@Transactional
+public class OTPServiceImpl implements OTPService {
+	
+	@Autowired
+	private AccountService accountService;
+	
+	@Autowired
+	private AccountOTPService accountOTPService;
+	
+	private Clock clock = new Clock(60);
+
+	@Override
+	public String generateOTPForAccountNumber(String accountNumber, String password) {
+		String otpCode = null;
+		
+		Account accountByAccountNumber = accountService.getAccountByAccountNumber(accountNumber);
+		if(accountByAccountNumber != null) {
+			String usePassword = accountByAccountNumber.getPassword();
+			
+			if(usePassword.equals(password)) {
+				Totp totp = new Totp(encodePassword(usePassword), clock);
+				otpCode = totp.now();
+				
+				AccountOTP otp = new AccountOTP();
+				otp.setAccountId(accountByAccountNumber.getAccountId());
+				otp.setIssuedDateTime(new Date());
+				otp.setOtp(otpCode);
+				otp.setAccountNumber(accountNumber);
+				otp.setValid(Boolean.TRUE);
+				
+				accountOTPService.save(otp);
+				
+				
+			}
+ 		}
+	
+		return otpCode;
+	}
+	
+
+
+	@Override
+	public boolean validateOTPForAccountNumber(String accountNumber, String otp) {
+		boolean verify = false;
+		
+		
+		Account accountByAccountNumber = accountService.getAccountByAccountNumber(accountNumber);
+		if(accountByAccountNumber != null) {
+			String usePassword = accountByAccountNumber.getPassword();
+
+			Totp totp = new Totp(encodePassword(usePassword), clock);
+			
+			verify = totp.verify(otp);
+			
+		}
+		
+		if(!verify) {
+			accountOTPService.invalidateOPTByCode(otp);
+		}
+		
+		return verify;
+	}
+	
+	
+	private String encodePassword(String password) {
+		return Base32.encode(password.getBytes());
+	}
+	
+}

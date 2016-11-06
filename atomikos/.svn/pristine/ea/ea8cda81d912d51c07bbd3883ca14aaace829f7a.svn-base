@@ -1,0 +1,24 @@
+package com.mcnc.mbanking.auth.util;
+
+import org.junit.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+
+public class TestPairKeyAuthenticationUtils {
+	private ObjectMapper oMapper = new ObjectMapper();
+
+	@Test
+	public void test() throws JsonProcessingException {
+		PairKeyAuthentication auth = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		
+		String writeValueAsString = oMapper.writeValueAsString(auth);
+		System.out.println(writeValueAsString);
+		
+		
+		
+	}
+
+}

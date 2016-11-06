@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	
+	
+	<jee:jndi-lookup id="dataSource" jndi-name="jdbc/dataSource" />
+	<jee:jndi-lookup id="dataSource2" jndi-name="jdbc/dataSource2" />
+	
+<!-- 	<bean id="dataSource" class="org.springframework.boot.jta.atomikos.AtomikosDataSourceBean"> -->
+<!-- 		<property name="xaDataSourceClassName" value="com.microsoft.sqlserver.jdbc.SQLServerXADataSource" /> -->
+<!-- 		<property name="minPoolSize" value="5" /> -->
+<!--         <property name="maxPoolSize" value="50" /> -->
+<!-- 		<property name="xaProperties"> -->
+<!-- 			<props> -->
+<!-- 				<prop key="URL">jdbc:sqlserver://localhost\SQLEXPRESS;DatabaseName=db2</prop> -->
+<!-- 				<prop key="user">sa1</prop> -->
+<!-- 				<prop key="password">G0CamHell0</prop> -->
+<!-- 			</props> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+	
+	<!-- 	<bean id="dataSource2" class="com.atomikos.jdbc.AtomikosDataSourceBean" -->
+<!-- 		init-method="init" destroy-method="close"> -->
+<!-- 		<property name="uniqueResourceName" value="MariaDB" /> -->
+<!-- 		<property name="xaDataSourceClassName" value="org.mariadb.jdbc.MariaDbDataSource" /> -->
+<!-- 		<property name="minPoolSize" value="5" /> -->
+<!--        <property name="maxPoolSize" value="50" /> -->
+<!-- 		<property name="xaProperties"> -->
+<!-- 			<props> -->
+<!-- 				<prop key="URL">jdbc:mysql://127.0.0.1:3306/ppcb</prop> -->
+<!-- 				<prop key="user">root</prop> -->
+<!-- 				<prop key="password">123</prop> -->
+<!-- 			</props> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+
+</beans>

@@ -1,0 +1,69 @@
+package com.mcnc.mbanking.auth.controller;
+
+import java.security.PrivateKey;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcnc.mbanking.auth.domain.ApiRequestMessage;
+import com.mcnc.mbanking.auth.domain.ApiResponseMessage;
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+import com.mcnc.mbanking.auth.domain.ResponseCode;
+import com.mcnc.mbanking.auth.domain.ResponseMessage;
+import com.mcnc.mbanking.auth.domain.ResponseMessageBuilder;
+import com.mcnc.mbanking.auth.util.EncryptionUtils;
+import com.mcnc.mbanking.auth.util.PairKeyAuthenticationUtils;
+
+@RestController
+public class MessageController {
+	
+	private ObjectMapper oMapper = new ObjectMapper();
+	
+	@PostMapping("/api/text")
+	public ResponseMessage<ApiResponseMessage> decrypt(HttpSession httpSession,
+			@RequestBody ApiRequestMessage req) {
+		ApiResponseMessage result = null;
+		ResponseCode code = null;
+		
+		
+		if(httpSession != null && httpSession.getAttribute("auth") != null) {
+			PairKeyAuthentication pairKeyAuthentication = null;
+			Object attribute = httpSession.getAttribute("auth"); 
+			
+			if(attribute instanceof PairKeyAuthentication) {
+				pairKeyAuthentication = (PairKeyAuthentication) attribute;
+			}
+			else{
+				pairKeyAuthentication = oMapper.convertValue(attribute,
+						PairKeyAuthentication.class);
+			}
+			
+			PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+		
+			String name = EncryptionUtils.decrypt(req.getName(), privateKey);
+			
+			if(StringUtils.isEmpty(name)) {
+				code = ResponseCode.E0003;
+			}
+			else {
+				result = new ApiResponseMessage();
+				result.setEncryptText(String.format("Your name is %s", name));
+			}
+			
+		}
+		else {
+			code = ResponseCode.E0002;
+		}
+		
+		
+		return ResponseMessageBuilder.instance(result)
+				.addCode(code)
+				.build();
+	}
+	
+}

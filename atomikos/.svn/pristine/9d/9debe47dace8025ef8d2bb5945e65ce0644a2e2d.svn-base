@@ -1,0 +1,51 @@
+package com.mcnc.mbanking.auth.util;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+
+import org.bouncycastle.operator.OperatorCreationException;
+import org.junit.Test;
+
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+
+public class TestCertificateUtils {
+	
+
+	@Test
+	public void test() throws InvalidKeyException, OperatorCreationException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, FileNotFoundException, IOException {
+
+		PairKeyAuthentication pairKey = PairKeyAuthenticationUtils.generatePairKeyAuthentication();
+		
+		byte[] generateCertificate = CertificateUtils.generateCertificate(pairKey);
+		
+        
+        writeToFile(generateCertificate, "D:/crs.der");
+	}
+	
+	
+	@Test
+	public void testWithBase64String() throws FileNotFoundException, IOException {
+		 
+        String test = "MIIDcTCCAlmgAwIBAgIBATANBgkqhkiG9w0BAQsFADBeMQswCQYDVQQGEwJLSDERMA8GA1UECgwIUFBDQiBPVFAxCzAJBgNVBAcMAlBQMQswCQYDVQQIDAJQUDEiMCAGCSqGSIb3DQEJARYTc2Vha2xlbmdAbWNuYy5jby5rcjAeFw0xNjEwMDcxMTM2NTNaFw0xNjEwMDcxMTQ2NTNaMF4xCzAJBgNVBAYTAktIMREwDwYDVQQKDAhQUENCIE9UUDELMAkGA1UEBwwCUFAxCzAJBgNVBAgMAlBQMSIwIAYJKoZIhvcNAQkBFhNzZWFrbGVuZ0BtY25jLmNvLmtyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2nItJtdtZNur/MLoToyWiahYjwaL1CopjINuVOz8vvyI/KM8dnGGxYodjwgORG9Stc4CB3Kwjda0MYJC2rXPbFkSmkApFs/U/UxC3tsohF9nbEq+zrq+S2WWPSlHTaEIWrVC/8YnnEme3vCybAOMVCDXGYmSFghitnXW3aK1aDmlcDb0eFMp/GfQA2UrthNvQs5aTwNHh0f3bD4woTwGunOq8FvY/kOzDImOa8jatlhhYsInl1UAGs+3SJf3Tks7jIpFMYTL/mkhB+bRy/ORHBN+JZgejutw+ZWa7zbn/b4E1giEzJLFpQV2eeozQh+nPj2eUKRfBysxinI6Us77pwIDAQABozowODAOBgNVHQ8BAf8EBAMCAAEwEgYDVR0lAQH/BAgwBgYEVR0lADASBgNVHREBAf8ECDAGgQRNQ05DMA0GCSqGSIb3DQEBCwUAA4IBAQARD6kjwNXF0hE53SsY2fpUhl+yk0ff55ZA9fuQFf57blGDzfu2q6Cxq6iSMvw4kdoVPjX3xCYoTuBK2mEgyKZNjXw/ul1AVxcGRtDyif19+SLcYhDDmHpK7Tv//n3SmsNYP/k78Y7hvdnTEcFvyyWHrK07RF34Cuoz/N1SkdHHucRwZScwjCsY/FukUb9OWhY+Wgqkkutchz6suys0M8K6uJXEJCXr+xMA/l3DiioNNP6bnc0um/KXgPpO1MRCj2/H7T5U9pGBTHUYzBVgD0CwP+efw+Rnunri1pUJ8DIlGFxi65hYe7l5yfHXxoTWnzCGv1Bxdrr//4x7dSzoqscz";
+        
+        
+        Decoder decoder = Base64.getDecoder();
+        writeToFile( decoder.decode(test), "D:/crs1.der");
+	}
+	 
+	private void writeToFile(byte[] data, String file) throws FileNotFoundException, IOException {
+		try (FileOutputStream out = new FileOutputStream(file)) {
+			out.write(data);
+			out.flush();
+		}
+	}
+
+}

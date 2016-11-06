@@ -1,0 +1,18 @@
+package com.mcnc.mbanking.auth.exception;
+
+import java.io.IOException;
+
+/**
+ * Exception invoked when cannot find PairKeyAuthentication from session
+ * @author sayseakleng
+ *
+ */
+public class InvalidPairKeyAuthenticationException extends IOException {
+
+	private static final long serialVersionUID = -6877057574568920026L;
+	
+	public InvalidPairKeyAuthenticationException() {
+		super("Unavailable or invalid Private key from session");
+	}
+
+}

@@ -1,0 +1,51 @@
+package com.mcnc.mbanking.auth.domain;
+
+import java.io.Serializable;
+
+public class PairKeyAuthentication implements Serializable {
+	
+	private static final long serialVersionUID = -4281874558621836490L;
+	
+	private String privateKey;
+	private String salt;
+	private transient String publicKey;
+	
+	
+	public PairKeyAuthentication() {
+		
+	}
+	
+	public PairKeyAuthentication(String privateKey, String publicKey, String salt) {
+		this.privateKey = privateKey;
+		this.publicKey = publicKey;
+		this.salt = salt;
+	}
+	
+	public String getPrivateKey() {
+		return privateKey;
+	}
+	public void setPrivateKey(String privateKey) {
+		this.privateKey = privateKey;
+	}
+
+	public String getSalt() {
+		return salt;
+	}
+
+	public void setSalt(String salt) {
+		this.salt = salt;
+	}
+
+	public String getPublicKey() {
+		return publicKey;
+	}
+
+	public void setPublicKey(String publicKey) {
+		this.publicKey = publicKey;
+	}
+
+	@Override
+	public String toString() {
+		return "PairKeyAuthentication [privateKey=" + privateKey + ", salt=" + salt + "]";
+	}
+}

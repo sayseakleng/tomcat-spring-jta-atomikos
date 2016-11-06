@@ -1,0 +1,91 @@
+package com.mcnc.mbanking.auth.util;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
+import org.junit.Test;
+
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+
+public class TestEncryptionUtils {
+	
+	private int limitBytesLenght = 245;
+
+	@Test
+	public void testEncryptBytesFromServer() {
+		PairKeyAuthentication pairKeyAuthentication = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+		PublicKey publicKey = PairKeyAuthenticationUtils.readPublicKey(pairKeyAuthentication);
+		
+		String a = "";
+		for(Integer i = 0; i < limitBytesLenght; i++) {
+			a = a.concat("a");
+		}
+		
+		byte[] encrypt = EncryptionUtils.encrypt(a.getBytes(), privateKey);
+		
+		String original = new String(ClientEncryptionUtils.decrypt(encrypt, publicKey));
+		System.out.printf("Original test: %s\n", original);
+		
+	}
+	
+	
+	@Test
+	public void testEncryptBytesFromClient() {
+		PairKeyAuthentication pairKeyAuthentication = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+		PublicKey publicKey = PairKeyAuthenticationUtils.readPublicKey(pairKeyAuthentication);
+		
+		byte[] encrypt = ClientEncryptionUtils.encrypt("Hello".getBytes(), publicKey);
+		
+		String original = new String(EncryptionUtils.decrypt(encrypt, privateKey));
+		System.out.printf("Original test: %s\n", original);
+		
+	}
+	
+	@Test
+	public void testEncryptTextFromServer() {
+		PairKeyAuthentication pairKeyAuthentication = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+		PublicKey publicKey = PairKeyAuthenticationUtils.readPublicKey(pairKeyAuthentication);
+		
+		
+		
+		String a = "";
+		for(Integer i = 0; i < limitBytesLenght; i++) {
+			a = a.concat("a");
+		}
+		
+		String encrypt = EncryptionUtils.encrypt(a, privateKey);
+		System.out.printf("Encrypted: %s\n", encrypt);
+		
+		String original = ClientEncryptionUtils.decrypt(encrypt, publicKey);
+		System.out.printf("Original test: %s\n", original);
+		
+	}
+	
+	
+	@Test
+	public void testEncryptTextFromClient() {
+		PairKeyAuthentication pairKeyAuthentication = PairKeyAuthenticationUtils
+				.generatePairKeyAuthentication();
+		PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+		PublicKey publicKey = PairKeyAuthenticationUtils.readPublicKey(pairKeyAuthentication);
+		
+		String a = "";
+		for(Integer i = 0; i < limitBytesLenght; i++) {
+			a = a.concat("a");
+		}
+		
+		String encrypt = ClientEncryptionUtils.encrypt(a, publicKey);
+		System.out.printf("Encrypted: %s\n", encrypt);
+		
+		String original = EncryptionUtils.decrypt(encrypt, privateKey);
+		System.out.printf("Original test: %s\n", original);
+		
+	}
+
+}

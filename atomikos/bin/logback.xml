@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="META-INF/schema/logback.xsd">
+	<property name="rootDir" value="BIZNOW_HOME/REST/logs" />
+	<property name="archiveDir" value="${rootDir}/archived" />
+	<property name="pattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" />
+	
+	<!-- console logger -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${pattern}</pattern>
+    	</encoder>
+	</appender>
+	
+	
+	<!-- Application Loggers -->
+	<logger name="com.mcnc" level="INFO" additivity="false">
+		<appender-ref ref="STDOUT"/>
+	</logger>
+	
+	<!-- 3rdparty Loggers -->
+	<logger name="org.springframework.core" level="INFO" additivity="true"/>
+	<logger name="org.springframework.beans" level="INFO" additivity="true"/>
+	<logger name="org.springframework.context" level="INFO" additivity="true"/>
+	<logger name="org.springframework.web" level="INFO" additivity="true"/>
+	
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+	</root>
+
+</configuration>

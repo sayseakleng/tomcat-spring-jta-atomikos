@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcnc.mbanking.auth.dao.AccountOTPDAO">
+	
+	<insert id="save" useGeneratedKeys="true" keyColumn="opt_id" keyProperty="optId">
+		INSERT INTO
+			account_otp(otp, issued_date_time, is_valid, account_id, account_number)
+		VALUES
+			(#{otp}, #{issuedDateTime}, #{isValid}, #{accountId}, #{accountNumber})
+	</insert>
+	
+	<select id="getAccountOTP" resultType="AccountOTP">
+		SELECT 
+			*
+		FROM 
+			account_otp
+		WHERE
+			opt_id = #{optId}
+	</select>
+	
+	
+	<select id="getTopAccountOTPByCode" resultType="AccountOTP">
+		SELECT 
+			TOP 1 *
+		FROM 
+			account_otp
+		WHERE
+			otp = #{otp}
+		ORDER BY 
+			issued_date_time DESC
+	</select>
+	
+	
+	<select id="getTopAccountOTPByAccountNumber" resultType="AccountOTP">
+		SELECT 
+			TOP 1 *
+		FROM 
+			account_otp
+		WHERE
+			account_number = #{accountNumber}
+		ORDER BY 
+			issued_date_time DESC
+	</select>
+	
+	<update id="invalidateOPTByCode">
+		UPDATE 
+			account_otp
+		SET 
+			is_valid = 0
+		WHERE
+			otp = #{otp}
+	
+	</update>
+</mapper>

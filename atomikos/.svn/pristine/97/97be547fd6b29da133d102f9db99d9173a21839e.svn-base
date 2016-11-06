@@ -1,0 +1,24 @@
+package com.mcnc.mbanking.auth.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HomeController {
+	
+	@Autowired
+	private ApplicationContext context;
+
+	@GetMapping("/")
+	public String getHomeApi() {
+		
+		String[] beanDefinitionNames = context.getBeanDefinitionNames();
+		for (String string : beanDefinitionNames) {
+			System.out.println(string);
+		}
+		
+		return "OTP Server started";
+	}
+}

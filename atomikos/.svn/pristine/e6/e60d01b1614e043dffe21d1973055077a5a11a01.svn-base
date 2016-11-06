@@ -1,0 +1,17 @@
+package com.mcnc.mbanking.auth.domain;
+
+import com.mcnc.mbanking.auth.secure.annotation.CipherData;
+
+public class ApiRequestMessage3 {
+	
+	@CipherData
+	int value;
+
+	public int getValue() {
+		return value;
+	}
+
+	public void setValue(int value) {
+		this.value = value;
+	}
+}

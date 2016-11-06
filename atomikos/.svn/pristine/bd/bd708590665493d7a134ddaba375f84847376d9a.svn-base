@@ -1,0 +1,224 @@
+package com.mcnc.mbanking.auth.util;
+
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import java.util.Base64;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
+
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+import com.mcnc.mbanking.auth.spring.context.SpringContextHolder;
+
+public class PairKeyAuthenticationUtils {
+	
+	protected static final Logger logger = LoggerFactory.getLogger(PairKeyAuthenticationUtils.class);
+	
+	protected static final Integer DEFAULT_PRIVATE_KEY_LENGTH 	= 2048;
+	protected static final String DEFAULT_KEY_ALGORITHM 		= "RSA";
+	
+	
+	/**
+	 * Generate {@link PairKeyAuthentication} object
+	 * <br/>
+	 * Which presents privateKey, publicKey, & salt 
+	 * @return
+	 */
+	public static PairKeyAuthentication generatePairKeyAuthentication() {
+		PairKeyAuthentication pairKeyAuthentication = null;
+		
+		try {
+			Integer privateKeyLength = SpringContextHolder.getProperty(PropertyKeys.PRIVATE_KEY_LENGTH, Integer.class);
+			String algorithm = SpringContextHolder.getProperty(PropertyKeys.KEY_ALGORITHM);
+			
+			if(privateKeyLength == null) {
+				privateKeyLength = DEFAULT_PRIVATE_KEY_LENGTH;
+			}
+			if(algorithm == null) {
+				algorithm = DEFAULT_KEY_ALGORITHM;
+			}
+			
+			KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
+			KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+			kpg.initialize(privateKeyLength);
+			KeyPair kp = kpg.genKeyPair();
+			
+			RSAPublicKeySpec publicKeySpec = keyFactory.getKeySpec(kp.getPublic(), RSAPublicKeySpec.class);
+			RSAPrivateKeySpec privateKeySpec = keyFactory.getKeySpec(kp.getPrivate(), RSAPrivateKeySpec.class);
+			
+			
+			pairKeyAuthentication = generatePairKeyAuthentication(publicKeySpec, privateKeySpec);
+			
+
+		} catch (NoSuchAlgorithmException e) {
+			logger.error("Cannot generate KeyPair", e);
+		}
+		catch (InvalidKeySpecException e) {
+			logger.error("Cannot read KeyPair specs", e);
+		}
+		
+		
+		return pairKeyAuthentication;
+	}
+	
+	/**
+	 * Internally generate {@link PairKeyAuthentication} object
+	 * @param publicKeySpec RSAPublicKeySpec from {@link PublicKey}
+	 * @param privateKeySpec RSAPrivateKeySpec from {@link PrivateKey}
+	 * @return
+	 */
+	private static PairKeyAuthentication generatePairKeyAuthentication(RSAPublicKeySpec publicKeySpec, RSAPrivateKeySpec privateKeySpec) {
+		
+		String salt = RandomStringUtils.randomAlphabetic(6);
+		String split = getSplit(salt);
+		
+		String publicKey = toString(publicKeySpec.getModulus(), 
+				publicKeySpec.getPublicExponent(), split);
+		
+		String privateKey = toString(privateKeySpec.getModulus(), 
+				privateKeySpec.getPrivateExponent(), split);
+		
+		
+		if(publicKey != null && privateKey != null) {
+			return new PairKeyAuthentication(privateKey, publicKey, salt);
+		}
+		
+		else {
+			return generatePairKeyAuthentication(publicKeySpec, privateKeySpec);
+		}
+	}
+	
+	/**
+	 * Internally generate Key String from RSAPublicKeySpec & RSAPrivateKeySpec
+	 * @param modulus
+	 * @param exponent
+	 * @param salt
+	 * @return
+	 */
+	private static String toString(BigInteger modulus, BigInteger exponent, String salt) {
+		String result = null;
+		
+		String sModulus = modulus.toString(16);
+		String sExponent = exponent.toString(16);
+		
+		if(!sModulus.contains(salt) && !sExponent.contains(salt)) {
+			StringBuilder sBuilder = new StringBuilder();
+			sBuilder.append(sModulus)
+			.append(salt)
+			.append(sExponent);
+			
+			result = sBuilder.toString();
+			
+		}
+		
+		return result;
+	}
+	
+
+	/**
+	 * Internal generate Split in Key String
+	 * @param salt
+	 * @return
+	 */
+	private static String getSplit(String salt) {
+		return Base64.getUrlEncoder().encodeToString(String.format("{%s}", salt).getBytes());
+	}
+	
+	
+	
+	/**
+	 * Read {@link PrivateKey} from {@link PairKeyAuthentication}
+	 * @param pairKeyAuthentication
+	 * @return
+	 */
+	public static PrivateKey readPrivateKey(PairKeyAuthentication pairKeyAuthentication){
+		PrivateKey privateKey = null;
+		
+		Assert.notNull(pairKeyAuthentication.getPrivateKey(), "PrivateKey is required");
+		Assert.notNull(pairKeyAuthentication.getSalt(), "Salt is required");
+		
+		String salt = pairKeyAuthentication.getSalt();
+		String split = getSplit(salt);
+		
+		String sPrivateKey = pairKeyAuthentication.getPrivateKey();
+		
+		String algorithm = SpringContextHolder.getProperty(PropertyKeys.KEY_ALGORITHM);
+		if(algorithm == null) {
+			algorithm = DEFAULT_KEY_ALGORITHM;
+		}
+
+		try {
+			String[] sArary = sPrivateKey.split(split);
+			String sModulus = sArary[0];
+			String sExponent = sArary[1];
+			BigInteger modulus = new BigInteger(sModulus, 16);
+			BigInteger exponent = new BigInteger(sExponent, 16);
+			
+			RSAPrivateKeySpec privateKeySpec = new RSAPrivateKeySpec(modulus, exponent);
+			KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+			privateKey = keyFactory.generatePrivate(privateKeySpec);
+			
+		} catch (NumberFormatException nfe) {
+			logger.error("Failed to read key from string.", "str", privateKey, nfe);
+		
+		} catch (GeneralSecurityException gse) {
+			logger.error("Failed to read key from string.", "str", privateKey, gse);
+		}
+		
+		return privateKey;
+	}
+	
+	/**
+	 * Read {@link PublicKey} from from {@link PairKeyAuthentication}
+	 * @param pairKeyAuthentication
+	 * @return
+	 */
+	public static PublicKey readPublicKey(PairKeyAuthentication pairKeyAuthentication){
+		PublicKey publicKey = null;
+		
+		Assert.notNull(pairKeyAuthentication.getPublicKey(), "PrivateKey is required");
+		Assert.notNull(pairKeyAuthentication.getSalt(), "Salt is required");
+		
+		String salt = pairKeyAuthentication.getSalt();
+		String split = getSplit(salt);
+		
+		String sPublicKey = pairKeyAuthentication.getPublicKey();
+		
+		String algorithm = SpringContextHolder.getProperty(PropertyKeys.KEY_ALGORITHM);
+		if(algorithm == null) {
+			algorithm = DEFAULT_KEY_ALGORITHM;
+		}
+
+		try {
+			String[] sArary = sPublicKey.split(split);
+			String sModulus = sArary[0];
+			String sExponent = sArary[1];
+			BigInteger modulus = new BigInteger(sModulus, 16);
+			BigInteger exponent = new BigInteger(sExponent, 16);
+			
+			RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(modulus, exponent);
+			KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+			publicKey = keyFactory.generatePublic(publicKeySpec);
+			
+		} catch (NumberFormatException nfe) {
+			logger.error("Failed to read key from string.", "str", publicKey, nfe);
+		
+		} catch (GeneralSecurityException gse) {
+			logger.error("Failed to read key from string.", "str", publicKey, gse);
+		}
+		
+		return publicKey;
+	}
+	
+}

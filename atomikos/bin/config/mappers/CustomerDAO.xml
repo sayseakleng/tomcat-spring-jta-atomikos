@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcnc.mbanking.auth.dao.CustomerDAO">
+
+	<resultMap type="Customer" id="customerResultMap" autoMapping="true" >
+		<collection property="accounts" ofType="Account" autoMapping="true" />
+	</resultMap>
+
+	
+	<select id="getCustomer" resultType="Customer">
+		SELECT 
+			*
+		FROM 
+			customer
+		WHERE
+			customer_id = #{customerId}
+	</select>
+	
+	
+	<select id="getCustomerDetail" resultMap="customerResultMap">
+		SELECT 
+			c.*,
+			a.account_number
+		FROM 
+			customer c inner join account a
+			on c.customer_id = a.customer_id 
+			and c.customer_id = #{customerId}
+			
+	</select>
+	
+	
+	<select id="getCustomerByDetail"  resultType="Customer">
+		SELECT 
+			*
+		FROM 
+			customer
+		WHERE
+			first_name = #{firstName}
+			and last_name = #{lastName}
+			and phone = #{phone}
+	</select>
+	
+</mapper>

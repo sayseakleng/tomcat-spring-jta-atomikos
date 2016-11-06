@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	
+	
+	<import resource="appcontext-mongo.xml"/>
+	
+	<!-- create bean mongoOperationsSessionRepository -->
+	<bean class="org.springframework.session.data.mongo.config.annotation.web.http.MongoHttpSessionConfiguration">
+		<property name="maxInactiveIntervalInSeconds" value="${session.maxInactiveIntervalInSeconds}" />
+		<property name="cookieSerializer">
+			<bean class="org.springframework.session.web.http.DefaultCookieSerializer">
+				<!-- <property name="domainName" value="localhost"/> -->
+				<property name="cookiePath" value="/"/>
+				<property name="cookieName" value="${session.id}"/>
+			</bean>
+		</property>
+	</bean>
+	
+</beans>

@@ -1,0 +1,60 @@
+buildscript {
+	repositories {
+        mavenCentral()
+        maven { url 'http://repo.spring.io/plugins-release' }
+    }
+    dependencies {
+        classpath('org.springframework.boot:spring-boot-gradle-plugin:1.4.0.RELEASE')
+    }
+}
+
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'spring-boot'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+	commons_lang3Version = '3.4'
+	bouncycastleVersion = '1.55'
+}
+
+
+dependencies {
+	compile 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.springframework.boot:spring-boot-starter-tomcat'
+	
+	compile 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	compile 'org.springframework.session:spring-session-data-mongo'
+
+	compile "org.apache.commons:commons-lang3:$commons_lang3Version"
+	compile "org.bouncycastle:bcprov-jdk15on:$bouncycastleVersion"
+	compile "org.bouncycastle:bcmail-jdk15on:$bouncycastleVersion"
+	
+	testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
+
+
+war {
+	archiveName 'auth.war'
+}
+
+
+eclipse {
+
+  wtp {
+    component {
+      contextPath = 'Auth.api.server'
+    }
+    
+  }
+}
+
+bootRepackage {
+    enabled = false
+}

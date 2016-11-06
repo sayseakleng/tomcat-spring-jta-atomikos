@@ -1,0 +1,85 @@
+package com.mcnc.mbanking.auth.secure.mapper;
+
+import java.io.IOException;
+import java.security.PrivateKey;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+import com.mcnc.mbanking.auth.exception.CipherDataSerializerException;
+import com.mcnc.mbanking.auth.exception.InvalidPairKeyAuthenticationException;
+import com.mcnc.mbanking.auth.util.Consts;
+import com.mcnc.mbanking.auth.util.EncryptionUtils;
+import com.mcnc.mbanking.auth.util.PairKeyAuthenticationUtils;
+
+public class CipherDataSerializer extends StdSerializer<Object> {
+	private static final long serialVersionUID = -8389202880537635878L;
+
+	private static final Logger logger = LoggerFactory.getLogger(CipherDataSerializer.class);
+	
+	private ObjectMapper oMapper = new ObjectMapper();
+
+	public CipherDataSerializer() {
+		super(Object.class);
+	}
+
+
+	@Override
+	public void serialize(Object oringalValue, JsonGenerator gen, SerializerProvider provider) throws IOException {
+		
+		HttpServletRequest servletRequest = getServletRequest();
+		
+		PairKeyAuthentication pairKeyAuthentication = null;
+		if(servletRequest != null && servletRequest.getSession() != null) {
+			HttpSession session = servletRequest.getSession();
+			
+			Object attribute = session.getAttribute(Consts.PAIR_KEY_SESSION_KEY); 
+			
+			if(attribute instanceof PairKeyAuthentication) {
+				pairKeyAuthentication = (PairKeyAuthentication) attribute;
+			}
+			else if(attribute != null){
+				pairKeyAuthentication = oMapper.convertValue(attribute,
+						PairKeyAuthentication.class);
+			}
+		}
+		
+		String parseValue = null;
+		if(pairKeyAuthentication != null) {
+			if(oringalValue != null) {
+				PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+				parseValue = EncryptionUtils.encrypt(oringalValue.toString(), privateKey);
+				
+				if(parseValue ==  null) {
+					logger.error("Cannot encrypt data");
+					throw new CipherDataSerializerException(gen.getOutputContext().getCurrentName());
+				}
+			}
+		}
+		else {
+			logger.error("Cannot read PairKeyAuthentication from session");
+			throw new InvalidPairKeyAuthenticationException();
+		}
+		
+		gen.writeString(parseValue);
+	}
+	
+	
+	private HttpServletRequest getServletRequest() {
+		final ServletRequestAttributes requestServletRequestAttributes = 
+				(ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+		return requestServletRequestAttributes != null ? requestServletRequestAttributes.getRequest() : null;
+	}
+
+}

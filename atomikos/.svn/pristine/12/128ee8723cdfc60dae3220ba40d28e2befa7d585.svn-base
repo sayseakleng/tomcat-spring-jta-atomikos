@@ -1,0 +1,102 @@
+package com.mcnc.mbanking.auth.controller;
+
+import java.security.PrivateKey;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcnc.mbanking.auth.domain.ApiRequestMessage;
+import com.mcnc.mbanking.auth.domain.ApiRequestMessage2;
+import com.mcnc.mbanking.auth.domain.ApiRequestMessage3;
+import com.mcnc.mbanking.auth.domain.ApiResponseMessage;
+import com.mcnc.mbanking.auth.domain.ApiResponseMessage2;
+import com.mcnc.mbanking.auth.domain.ApiResponseMessage3;
+import com.mcnc.mbanking.auth.domain.PairKeyAuthentication;
+import com.mcnc.mbanking.auth.domain.ResponseCode;
+import com.mcnc.mbanking.auth.domain.ResponseMessage;
+import com.mcnc.mbanking.auth.domain.ResponseMessageBuilder;
+import com.mcnc.mbanking.auth.util.Consts;
+import com.mcnc.mbanking.auth.util.EncryptionUtils;
+import com.mcnc.mbanking.auth.util.PairKeyAuthenticationUtils;
+
+@RestController
+public class MessageController {
+	
+	private ObjectMapper oMapper = new ObjectMapper();
+	
+	@PostMapping("/api/text")
+	public ResponseMessage<ApiResponseMessage> decrypt(HttpSession httpSession,
+			@RequestBody ApiRequestMessage req) {
+		ApiResponseMessage result = null;
+		ResponseCode code = null;
+		
+		
+		if(httpSession != null && httpSession.getAttribute(Consts.PAIR_KEY_SESSION_KEY) != null) {
+			PairKeyAuthentication pairKeyAuthentication = null;
+			Object attribute = httpSession.getAttribute(Consts.PAIR_KEY_SESSION_KEY); 
+			
+			if(attribute instanceof PairKeyAuthentication) {
+				pairKeyAuthentication = (PairKeyAuthentication) attribute;
+			}
+			else{
+				pairKeyAuthentication = oMapper.convertValue(attribute,
+						PairKeyAuthentication.class);
+			}
+			
+			PrivateKey privateKey = PairKeyAuthenticationUtils.readPrivateKey(pairKeyAuthentication);
+		
+			String name = EncryptionUtils.decrypt(req.getName(), privateKey);
+			
+			if(StringUtils.isEmpty(name)) {
+				code = ResponseCode.E0003;
+			}
+			else {
+				result = new ApiResponseMessage();
+				
+				String encryptResponse = EncryptionUtils.encrypt(String.format("Your name is %s", name), 
+						privateKey);
+				
+				result.setEncryptText(encryptResponse);
+			}
+			
+		}
+		else {
+			code = ResponseCode.E0002;
+		}
+		
+		
+		return ResponseMessageBuilder.instance(result)
+				.addCode(code)
+				.build();
+	}
+	
+	
+	@PostMapping("/api/text2")
+	public ResponseMessage<ApiResponseMessage2> decrypt2(
+			@RequestBody ApiRequestMessage2 req) {
+		
+
+		ApiResponseMessage2 msg = new ApiResponseMessage2();
+		msg.setEncryptText(String.format("Your name is %s", req.getName()));
+		
+		return ResponseMessageBuilder.instance(msg)
+				.build();
+	}
+	
+	@PostMapping("/api/text3")
+	public ResponseMessage<ApiResponseMessage3> decrypt3(
+			@RequestBody ApiRequestMessage3 req) {
+		
+
+		ApiResponseMessage3 msg = new ApiResponseMessage3();
+		msg.setEncryptValue(req.getValue());
+		
+		return ResponseMessageBuilder.instance(msg)
+				.build();
+	}
+}
